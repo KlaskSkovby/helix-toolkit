@@ -40,6 +40,11 @@ public sealed class CombinedSelectionCommand : SelectionCommand
     public Brush? FillRectangleBrush { get; set; }
 
     /// <summary>
+    /// The size of selection point.
+    /// </summary>
+    public Size PointSize { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="RectangleSelectionCommand" /> class.
     /// </summary>
     /// <param name="viewport">The viewport.</param>
@@ -105,7 +110,15 @@ public sealed class CombinedSelectionCommand : SelectionCommand
 
         if (IsPointSelection())
         {
-            HandlePointSelection();
+            if (PointSize.Equals(default))
+            {
+                HandlePointSelection();
+            }
+            else
+            {
+                this.selectionRect.Inflate(this.PointSize.Width / 2, this.PointSize.Height / 2);
+                HandleRectangleSelection();
+            }
         }
         else
         {
@@ -122,7 +135,7 @@ public sealed class CombinedSelectionCommand : SelectionCommand
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void HandlePointSelection()
         {
-            IList<Viewport3DHelper.HitResult>? res = this.Viewport.FindHits(this.selectionRect.Location) ?? new List<Viewport3DHelper.HitResult>();
+            IList<PointHitResult>? res = this.Viewport.FindHits(this.selectionRect.Location) ?? new List<PointHitResult>();
             var selectedModels = res.Select(hit => hit.Model).ToList();
             this.OnModelsSelected(new ModelsSelectedByPointEventArgs(selectedModels, this.selectionRect.Location));
             var selectedVisuals = res.Select(hit => hit.Visual).ToList();
@@ -131,7 +144,7 @@ public sealed class CombinedSelectionCommand : SelectionCommand
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void HandleRectangleSelection()
         {
-            IEnumerable<Viewport3DHelper.RectangleHitResult> res = this.Viewport.FindHits(this.selectionRect, this.SelectionHitMode);
+            IEnumerable<RectangleHitResult> res = this.Viewport.FindHits(this.selectionRect, this.SelectionHitMode);
             var selectedModels = res.Select(hit => hit.Model).ToList();
             this.OnModelsSelected(new ModelsSelectedByRectangleEventArgs(selectedModels, this.selectionRect));
             var selectedVisuals = res.Select(hit => hit.Visual).ToList();
